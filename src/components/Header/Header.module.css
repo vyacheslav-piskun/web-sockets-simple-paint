@@ -1,0 +1,26 @@
+.header {
+    height: 4rem;
+    border-bottom: 1px solid var(--c-medium-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: var(--c-secondary-bg);
+}
+
+.block {
+    display: flex;
+    height: 100%;
+}
+
+.button {
+    height: 100%;
+    padding: 0 1.5rem;
+    text-transform: uppercase;
+    background-color: var(--c-button-bg);
+    color: var(--c-button-text);
+    transition: background-color var(--tr-small);
+}
+
+.button:hover {
+    background-color: var(--c-button-bg-hover);
+}
