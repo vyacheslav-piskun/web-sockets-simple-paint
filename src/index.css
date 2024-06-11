@@ -44,6 +44,7 @@ label {
   --c-button-border: #999999;
   --c-button-text: #333333;
   --c-button-bg-hover: #CCCCCC;
+  --c-button-bg-active: #bbbbbb;
   --c-button-border-hover: #666666;
 
   --c-link: #007BFF;
