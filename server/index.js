@@ -29,4 +29,4 @@ app.ws('/', (ws, req) => {
 
 app.listen(port, () => {
 	console.log(`server started on port ${port}`);
-});
+})

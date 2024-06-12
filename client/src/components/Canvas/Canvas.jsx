@@ -15,6 +15,32 @@ const Canvas = ({
 	const [currentShape, setCurrentShape] = useState(null);
 	const [shapes, setShapes] = useState([]);
 	const canvasRef = useRef(null);
+	const socketRef = useRef(null);
+	const [currentStamp, setCurrentStamp] = useState(0);
+
+	useEffect(() => {
+		const ws = new WebSocket('ws://localhost:5000');
+		socketRef.current = ws;
+
+		ws.onopen = (e) => {
+			ws.send(JSON.stringify({type: 'info', message: 'connected on client side'}));
+		}
+
+		ws.onmessage = (e) => {
+			console.log(e)
+		}
+
+		return ()=> { ws.close() }
+	}, []);
+
+	useEffect(() => {
+		if(socketRef.current && currentStamp) {
+			socketRef.current.send(JSON.stringify({
+				type: 'message', message: currentStamp
+			}));
+		}
+	}, [currentStamp]);
+
 
 	useEffect(() => {
 		const canvas = canvasRef.current;
@@ -65,6 +91,12 @@ const Canvas = ({
 
 	return (
 		<div className={styles.wrapper}>
+			<div>
+				{currentStamp && <div>{currentStamp}</div>}
+				<button type="button" onClick={() => {
+					setCurrentStamp(Date.now());
+				}}>CLICK</button>
+			</div>
 			<canvas
 				width={800}
 				height={600}
