@@ -12,7 +12,6 @@ app.ws('/', (ws, req) => {
 
 	ws.on('message', (msg) => {
 		const message = JSON.parse(msg);
-		console.log(`Received message: ${msg}`);
 
 		clients.forEach(client => {
 			if (client !== ws && client.readyState === client.OPEN) {
