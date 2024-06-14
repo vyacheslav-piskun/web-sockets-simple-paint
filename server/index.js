@@ -1,9 +1,13 @@
 const express = require('express');
+const cors = require('cors')
+
 const app = express();
 const expressWs = require('express-ws')(app);
 
 const port = process.env.PORT || 5000;
 let clients = [];
+
+app.use(cors());
 
 app.ws('/', (ws, req) => {
 	console.log('connected to WS server');
