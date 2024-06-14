@@ -24,13 +24,28 @@ const Canvas = ({
 		ws.onopen = (e) => {
 			ws.send(JSON.stringify({type: 'info', message: 'connected on client side'}));
 		}
-
-		ws.onmessage = (e) => {
-			console.log(e.data)
-		}
-
 		return ()=> { ws.close() }
 	}, []);
+
+	useEffect(() => {
+		if(socketRef?.current) {
+			socketRef.current.onmessage = (e) => {
+				const data = JSON.parse(e.data);
+				if (data.type === 'drawing') {
+
+					const ShapeConstructor = shapeConstructors[data.shapeType];
+					const shape = new ShapeConstructor(data.start);
+					shape.setEnd(data.end);
+					setShapes(prevShapes => [...prevShapes, shape]);
+					if (ctx) {
+						ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+						shapes.forEach(shape => shape.draw(ctx));
+						shape.draw(ctx);
+					}
+				}
+			}
+		}
+	}, [ctx, shapes]);
 
 	useEffect(() => {
 		const canvas = canvasRef.current;
@@ -58,8 +73,10 @@ const Canvas = ({
 			shapes.forEach(shape => shape.draw(ctx));
 			currentShape.draw(ctx);
 			socketRef.current.send(JSON.stringify({
-				type: 'coords',
-				message: newPoint
+				type: 'drawing',
+				shapeType,
+				start: currentShape.start,
+				end: newPoint
 			}));
 		}
 	};
