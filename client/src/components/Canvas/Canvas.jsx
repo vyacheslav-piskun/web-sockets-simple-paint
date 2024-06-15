@@ -1,21 +1,24 @@
-import {useClickAway} from "react-use";
-import {useCallback, useEffect, useRef, useState} from "react";
+import { useClickAway } from "react-use";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import useNewSocket from "../../hooks/useNewSocket";
 
 import shapeConstructors from "../../classes";
 
+
+
 import styles from './Canvas.module.css';
 
 const Canvas = ({
-	shapeType,
-	clearingCanvas,
-	setClearingCanvas
-}) => {
+									shapeType,
+									clearingCanvas,
+									setClearingCanvas
+								}) => {
 	const [ctx, setCtx] = useState(null);
 	const [isDrawing, setIsDrawing] = useState(false);
 	const [currentShape, setCurrentShape] = useState(null);
 	const [shapes, setShapes] = useState([]);
+	const [remoteShapes, setRemoteShapes] = useState([]);
 	const canvasRef = useRef(null);
 
 	const { ws } = useNewSocket();
@@ -30,18 +33,19 @@ const Canvas = ({
 					shape.setEnd(data.end);
 
 					if (data.final) {
-						setShapes(prevShapes => [...prevShapes, shape]);
+						setRemoteShapes(prevRemoteShapes => [...prevRemoteShapes, shape]);
 					} else {
 						if (ctx) {
 							ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 							shapes.forEach(s => s.draw(ctx));
+							remoteShapes.forEach(s => s.draw(ctx));
 							shape.draw(ctx);
 						}
 					}
 				}
 			}
 		}
-	}, [ctx, shapes]);
+	}, [ctx, shapes, remoteShapes]);
 
 	useEffect(() => {
 		const canvas = canvasRef.current;
@@ -66,6 +70,7 @@ const Canvas = ({
 		if (ctx) {
 			ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 			shapes.forEach(shape => shape.draw(ctx));
+			remoteShapes.forEach(shape => shape.draw(ctx));
 			currentShape.draw(ctx);
 			ws.send(JSON.stringify({
 				type: 'drawing',
@@ -98,6 +103,7 @@ const Canvas = ({
 		if (clearingCanvas) {
 			setIsDrawing(false);
 			setShapes([]);
+			setRemoteShapes([]);
 			ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 			setClearingCanvas(false);
 		}
