@@ -1,6 +1,8 @@
 import {useClickAway} from "react-use";
 import {useCallback, useEffect, useRef, useState} from "react";
 
+import useNewSocket from "../../hooks/useNewSocket";
+
 import shapeConstructors from "../../classes";
 
 import styles from './Canvas.module.css';
@@ -15,32 +17,26 @@ const Canvas = ({
 	const [currentShape, setCurrentShape] = useState(null);
 	const [shapes, setShapes] = useState([]);
 	const canvasRef = useRef(null);
-	const socketRef = useRef(null);
+
+	const { ws } = useNewSocket();
 
 	useEffect(() => {
-		const ws = new WebSocket('ws://localhost:5000');
-		socketRef.current = ws;
-
-		ws.onopen = (e) => {
-			ws.send(JSON.stringify({type: 'info', message: 'connected on client side'}));
-		}
-		return ()=> { ws.close() }
-	}, []);
-
-	useEffect(() => {
-		if(socketRef?.current) {
-			socketRef.current.onmessage = (e) => {
+		if(ws) {
+			ws.onmessage = (e) => {
 				const data = JSON.parse(e.data);
 				if (data.type === 'drawing') {
-
 					const ShapeConstructor = shapeConstructors[data.shapeType];
 					const shape = new ShapeConstructor(data.start);
 					shape.setEnd(data.end);
-					setShapes(prevShapes => [...prevShapes, shape]);
-					if (ctx) {
-						ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-						shapes.forEach(shape => shape.draw(ctx));
-						shape.draw(ctx);
+
+					if (data.final) {
+						setShapes(prevShapes => [...prevShapes, shape]);
+					} else {
+						if (ctx) {
+							ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+							shapes.forEach(s => s.draw(ctx));
+							shape.draw(ctx);
+						}
 					}
 				}
 			}
@@ -69,14 +65,14 @@ const Canvas = ({
 
 		if (ctx) {
 			ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-
 			shapes.forEach(shape => shape.draw(ctx));
 			currentShape.draw(ctx);
-			socketRef.current.send(JSON.stringify({
+			ws.send(JSON.stringify({
 				type: 'drawing',
 				shapeType,
 				start: currentShape.start,
-				end: newPoint
+				end: newPoint,
+				final: false
 			}));
 		}
 	};
@@ -85,8 +81,18 @@ const Canvas = ({
 		if (!isDrawing) return;
 		setIsDrawing(false);
 		setShapes([...shapes, currentShape]);
+		ws.send(JSON.stringify({
+			type: 'drawing',
+			shapeType,
+			start: currentShape.start,
+			end: currentShape.end,
+			final: true
+		}));
 		setCurrentShape(null);
-	}, [isDrawing, currentShape]);
+	}, [isDrawing, currentShape, shapes]);
+
+
+	// -------- service logic -------
 
 	useEffect(() => {
 		if (clearingCanvas) {
@@ -100,6 +106,10 @@ const Canvas = ({
 	useClickAway(canvasRef,() => {
 		handleMouseUp();
 	}, ["mouseup"])
+
+	useEffect(() => {
+		console.log(shapes)
+	}, [shapes]);
 
 	return (
 		<div className={styles.wrapper}>
